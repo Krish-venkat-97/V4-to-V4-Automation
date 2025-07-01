@@ -1,0 +1,11 @@
+#ignore these files for git commit
+
+#python path
+.env
+.venv
+
+#config files
+config.ini
+
+#python cache
+__pycache__/
