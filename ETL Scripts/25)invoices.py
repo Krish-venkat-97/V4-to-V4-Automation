@@ -77,7 +77,7 @@ else:
 #----------------------------wrtting default values--------------------
 src_invoices_df['appointment_id'] = None
 src_invoices_df['surgery_id'] = None
-src_invoices_df['income_cartegory_id'] = src_invoices_df['income_cartegory_id'].fillna(1)
+src_invoices_df['income_category_id'] = src_invoices_df['income_category_id'].fillna(1)
 
 #----------------------------new data insertion--------------------------------
 src_invoices_df1 = src_invoices_df
@@ -135,12 +135,12 @@ def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name
             insert_query1 = f"INSERT INTO mapping_table ({columns1}) VALUES ({placeholders1})"
             cursor.executemany(insert_query1, mapping_rows)
             tgt_connection.commit()
-        print('Data and mapping table insert successful for contacts - New insert!')
+        print('Data and mapping table insert successful for invoices - New insert!')
     except Exception as e:
-        logging.error(f"Data and mapping table insert failed for contacts - New insert! Error occurred: {e} \n Query: {insert_query} \n Mapping Query: {insert_query1} \n sample row: {rows[0] if rows else 'No rows to insert'} \n sample mapping row: {mapping_rows[0] if mapping_rows else 'No mapping rows to insert'}")
+        logging.error(f"Data and mapping table insert failed for invoices - New insert! Error occurred: {e} \n Query: {insert_query} \n Mapping Query: {insert_query1} \n sample row: {rows[0] if rows else 'No rows to insert'} \n sample mapping row: {mapping_rows[0] if mapping_rows else 'No mapping rows to insert'}")
         #print("Query:", insert_query)
         #print("Sample Row:", rows[0] if rows else "No rows to insert")
-        print('Data and mapping table insert failed for contacts - New insert!')
+        print('Data and mapping table insert failed for invoices - New insert!')
 
 # Insert new records and mapping entries simultaneously
 insert_new_records_and_mapping(src_invoices_df1, tgt_connection, practice_name, table_name)

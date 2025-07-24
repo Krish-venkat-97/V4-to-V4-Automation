@@ -1,5 +1,7 @@
-from configparser import ConfigParser
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from configparser import ConfigParser
 import pymysql
 import pandas as pd
 import pandasql as ps

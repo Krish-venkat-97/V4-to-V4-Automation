@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from libs import *
 from src.utils import get_src_myconnection, get_tgt_myconnection,get_patient_records,getPractice,getSourceFilePath,getTargetFilePath
 import warnings

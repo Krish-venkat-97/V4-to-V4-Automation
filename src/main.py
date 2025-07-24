@@ -1,4 +1,7 @@
 # Main script to orchestrate ETL processes
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from libs import *
 from src.utils import get_src_myconnection, get_tgt_myconnection,get_patient_records,getPractice,getLogFilePath
 import warnings
@@ -72,8 +75,8 @@ else:
 
             # Run the script and ensure the progress bar is displayed
             script_path = os.path.join("ETL Scripts", script)
-            result = subprocess.run(["python", script_path], capture_output=True, text=True, check=True, encoding='utf-8')
-
+            #result = subprocess.run(["python", script_path], capture_output=True, text=True, check=True, encoding='utf-8')
+            result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True, encoding='utf-8')
             # Log standard output
             #logging.info(f"Output of {script}: {result.stdout}")
             print(f"Output of {script}: {result.stdout}")

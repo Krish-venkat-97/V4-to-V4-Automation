@@ -85,3 +85,6 @@ def getTargetFilePath():
 
 def getLogFilePath():
     return config['log_directory']['log_directory']
+
+def getMergeFilePath():
+    return config['merge_file_path']['merge_file_path']
