@@ -49,9 +49,9 @@ src_contacts_df['title_id'] = src_contacts_df['title_id'].fillna(0).astype(int) 
 #----------------------------new data insertion--------------------------------
 src_contacts_df1 = src_contacts_df
 #id genration for new data
-tgt_contacts_max = f'SELECT MAX(id) as max_id FROM {table_name}'
+tgt_contacts_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_contacts_max_df = pd.read_sql(tgt_contacts_max, tgt_connection)
-max_id = tgt_contacts_max_df['max_id'][0] + 1 if not tgt_contacts_max_df.empty else 1
+max_id = int(tgt_contacts_max_df['max_id'].iloc[0])
 src_contacts_df1.insert(0, 'target_id', range(max_id, max_id + len(src_contacts_df1)))
 
 # Before inserting new records, check mapping_table for existing source_ids to avoid duplicates

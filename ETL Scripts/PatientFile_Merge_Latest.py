@@ -31,7 +31,7 @@ ref_patient_df = pd.read_sql(ref_patient,myconnection)
 
 ref_patient_df1= ref_patient_df[['orginal_id', 'new_id']]
 
-source_file_path = getSourceFilePath()
+source_file_path = getTargetFilePath()
 merge_file_path = getMergeFilePath()
 
 source_file_location = source_file_path

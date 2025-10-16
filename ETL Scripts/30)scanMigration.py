@@ -80,7 +80,7 @@ for index,row in landing_scan_df2.iterrows():
         logging.error(f"Error copying file from {row['source_file_path']} to {row['target_file_path']}")
         break
 
-print('Letter migration completed successfully!')
+print('scan migration completed successfully!')
 bar.close()
 
 

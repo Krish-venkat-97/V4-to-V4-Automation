@@ -27,9 +27,9 @@ tgt_hospitals_df = pd.read_sql(tgt_hospitals, tgt_connection)
 #----------------------------new data insertion--------------------------------
 src_hospitals_df1 = src_hospitals_df[~src_hospitals_df['name'].str.upper().isin(tgt_hospitals_df['hospital_name'])]
 #id genration for new data
-tgt_hospitals_max = f'SELECT MAX(id) as max_id FROM {table_name}'
+tgt_hospitals_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_hospitals_max_df = pd.read_sql(tgt_hospitals_max, tgt_connection)
-max_id = tgt_hospitals_max_df['max_id'][0] + 1 if not tgt_hospitals_max_df.empty else 1
+max_id = int(tgt_hospitals_max_df['max_id'].iloc[0])
 src_hospitals_df1.insert(0, 'target_id', range(max_id, max_id + len(src_hospitals_df1)))
 src_hospitals_df1 = src_hospitals_df1.drop(columns=['name_upper'])
 

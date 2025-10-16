@@ -57,9 +57,9 @@ src_patient_contact_details_df = src_patient_contact_details_df.rename(columns={
 #----------------------------new data insertion--------------------------------
 src_patient_contact_details_df1 = src_patient_contact_details_df
 #id genration for new data
-tgt_patient_contact_details_max = f'SELECT MAX(id) as max_id FROM {table_name}'
+tgt_patient_contact_details_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_patient_contact_details_max_df = pd.read_sql(tgt_patient_contact_details_max, tgt_connection)
-max_id = tgt_patient_contact_details_max_df['max_id'][0] + 1 if not tgt_patient_contact_details_max_df.empty else 1
+max_id = int(tgt_patient_contact_details_max_df['max_id'].iloc[0])
 src_patient_contact_details_df1.insert(0, 'target_id', range(max_id, max_id + len(src_patient_contact_details_df1)))
 
 # Before inserting new records, check mapping_table for existing source_ids to avoid duplicates

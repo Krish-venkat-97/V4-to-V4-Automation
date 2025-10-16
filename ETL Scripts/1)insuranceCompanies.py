@@ -28,9 +28,9 @@ tgt_insurance_companies_df = pd.read_sql(tgt_insurance_companies, tgt_connection
 #----------------------------new data insertion--------------------------------
 src_insurance_companies_df1 = src_insurance_companies_df[~src_insurance_companies_df['name'].str.upper().isin(tgt_insurance_companies_df['insurance_company_name'])]
 #id genration for new data
-tgt_insurance_companies_max = f'SELECT MAX(id) as max_id FROM {table_name}'
+tgt_insurance_companies_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_insurance_companies_max_df = pd.read_sql(tgt_insurance_companies_max, tgt_connection)
-max_id = tgt_insurance_companies_max_df['max_id'][0] + 1 if not tgt_insurance_companies_max_df.empty else 1
+max_id = int(tgt_insurance_companies_max_df['max_id'].iloc[0])
 src_insurance_companies_df1.insert(0, 'target_id', range(max_id, max_id + len(src_insurance_companies_df1)))
 
 #-------------------------------existing data mapping table update--------------------------------

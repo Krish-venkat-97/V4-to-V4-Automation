@@ -50,6 +50,7 @@ def get_last_completed_script():
 
 # Function to save the last successfully completed script
 def save_checkpoint(script_name):
+    os.makedirs(os.path.dirname(checkpoint_file), exist_ok=True)
     with open(checkpoint_file, "w") as f:
         f.write(script_name)
 

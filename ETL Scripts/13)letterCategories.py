@@ -30,9 +30,9 @@ tgt_letter_categories_df = pd.read_sql(tgt_letter_categories, tgt_connection)
 #----------------------------new data insertion--------------------------------
 src_letter_categories_df1 = src_letter_categories_df[~src_letter_categories_df['name'].str.upper().isin(tgt_letter_categories_df['letter_category_name'])]
 #id genration for new data
-tgt_letter_categories_max = f'SELECT MAX(id) as max_id FROM {table_name}'
+tgt_letter_categories_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_letter_categories_max_df = pd.read_sql(tgt_letter_categories_max, tgt_connection)
-max_id = tgt_letter_categories_max_df['max_id'][0] + 1 if not tgt_letter_categories_max_df.empty else 1
+max_id = int(tgt_letter_categories_max_df['max_id'].iloc[0])
 src_letter_categories_df1.insert(0, 'target_id', range(max_id, max_id + len(src_letter_categories_df1)))
 src_letter_categories_df1 = src_letter_categories_df1.drop(columns=['name_upper'])
 

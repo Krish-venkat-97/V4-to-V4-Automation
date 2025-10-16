@@ -49,9 +49,9 @@ else:
 #----------------------------new data insertion--------------------------------
 src_prescriptions_df1 = src_prescriptions_df
 #id genration for new data
-tgt_prescriptions_max = f'SELECT MAX(id) as max_id FROM {table_name}'
+tgt_prescriptions_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_prescriptions_max_df = pd.read_sql(tgt_prescriptions_max, tgt_connection)
-max_id = tgt_prescriptions_max_df['max_id'][0] + 1 if not tgt_prescriptions_max_df.empty else 1
+max_id = int(tgt_prescriptions_max_df['max_id'].iloc[0])
 src_prescriptions_df1.insert(0, 'target_id', range(max_id, max_id + len(src_prescriptions_df1)))
 
 # Before inserting new records, check mapping_table for existing source_ids to avoid duplicates
@@ -78,7 +78,8 @@ def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name
         return
 
     # Insert new records into the target table
-    column_names = [col for col in new_records_df.columns]
+    column_names = ['`repeat`' if col == 'repeat' else col for col in new_records_df.columns]
+    #column_names = column_names[column_names.index('repeat')] = "`repeat`"
     columns = ", ".join(column_names)
     placeholders = ", ".join(["%s"] * len(column_names))
     rows = new_records_df.values.tolist()
@@ -98,7 +99,7 @@ def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name
             tgt_connection.commit()
         print('Data and mapping table insert successful for contacts - New insert!')
     except Exception as e:
-        logging.error(f"Data and mapping table insert failed for contacts - New insert! Error occurred: {e} \n Query: {insert_query} \n Mapping Query: {insert_query1} \n sample row: {rows[0] if rows else 'No rows to insert'} \n sample mapping row: {mapping_rows[0] if mapping_rows else 'No mapping rows to insert'}", flush=True)
+        #logging.error(f"Data and mapping table insert failed for contacts - New insert! Error occurred: {e} \n Query: {insert_query} \n Mapping Query: {insert_query1} \n sample row: {rows[0] if rows else 'No rows to insert'} \n sample mapping row: {mapping_rows[0] if mapping_rows else 'No mapping rows to insert'}", flush=True)
         print("Query:", insert_query)
         print("Sample Row:", rows[0] if rows else "No rows to insert")
         print('Data and mapping table insert failed for contacts - New insert!')

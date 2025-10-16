@@ -18,6 +18,8 @@ def get_src_myconnection():
     except Exception as e:
         print(f"Error: {e}")
         return None
+    
+src_connection = get_src_myconnection()
 
 def get_tgt_myconnection():
     try:
@@ -30,6 +32,8 @@ def get_tgt_myconnection():
     except Exception as e:
         print(f"Error: {e}")
         return None
+    
+tgt_connection = get_tgt_myconnection()
 
 def safe_value(value):
     if value is None or pd.isnull(value):
@@ -69,7 +73,8 @@ def getPractice():
     return config['practice']['practice']
 
 def get_patient_records():
-    src_excel = pd.read_excel(getSourceExcel())
+    #src_excel = pd.read_excel(getSourceExcel())
+    src_excel = pd.read_sql('SELECT id as PID FROM patients', src_connection)
     patient_df = src_excel[['PID']].dropna()  # Drop rows with NaN in the PID column
     patient_df['PID'] = patient_df['PID'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x))
     patient_df['PID'] = patient_df['PID'].astype(int)

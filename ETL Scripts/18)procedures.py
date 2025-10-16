@@ -43,9 +43,9 @@ src_procedures_df1 = dd.merge(src_procedures_df, tgt_procedures_df, left_on=['na
 src_procedures_df1 = src_procedures_df1[src_procedures_df1['_merge'] == 'left_only'].drop(columns=['_merge', 'procedure_name', 'tgt_procedure_code','target_id'])
 src_procedures_df1 = src_procedures_df1.drop(columns=['name_upper'])
 #id genration for new data
-tgt_procedures_max = f'SELECT MAX(id) as max_id FROM {table_name}'
+tgt_procedures_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_procedures_max_df = pd.read_sql(tgt_procedures_max, tgt_connection)
-max_id = tgt_procedures_max_df['max_id'][0] + 1 if not tgt_procedures_max_df.empty else 1
+max_id = int(tgt_procedures_max_df['max_id'].iloc[0])
 src_procedures_df1.insert(0, 'target_id', range(max_id, max_id + len(src_procedures_df1)))
 
 #---------------------------------default valule insertion-----------------------------
