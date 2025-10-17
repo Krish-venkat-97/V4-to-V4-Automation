@@ -88,9 +88,9 @@ src_receipts_df1.insert(0, 'target_id', range(max_id, max_id + len(src_receipts_
 
 #id generation for receipt no
 src_receipts_df1.drop(columns=['receipt_no'], inplace=True, errors='ignore')
-tgt_receiptno_max = f'SELECT MAX(receipt_no) as max_id FROM {table_name}'
+tgt_receiptno_max = f'SELECT CASE WHEN MAX(receipt_no) is NULL THEN 1 ELSE MAX(receipt_no) + 1 END as max_id FROM {table_name}'
 tgt_receiptno_max_df = pd.read_sql(tgt_receiptno_max, tgt_connection)
-max_id = tgt_receipts_max_df['max_id'][0] + 1 if not tgt_receiptno_max_df.empty else 1
+max_id = int(tgt_receiptno_max_df['max_id'].iloc[0])
 src_receipts_df1.insert(0, 'receipt_no', range(max_id, max_id + len(src_receipts_df1)))
 
 # Before inserting new records, check mapping_table for existing source_ids to avoid duplicates
