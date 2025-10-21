@@ -16,43 +16,28 @@ tgt_connection = get_tgt_myconnection()
 tgt_cursor = tgt_connection.cursor()
 patient_ids = get_patient_records()
 practice_name = getPractice()
-table_name = 'prescriptions'
+table_name = 'prescription_details'
 
-src_prescriptions  = f"SELECT * FROM prescriptions WHERE patient_id IN ({','.join(map(str, patient_ids))})"
-src_prescriptions_df = pd.read_sql(src_prescriptions, src_connection)
+src_prescription_details  = f"SELECT * FROM prescription_details"
+src_prescription_details_df = pd.read_sql(src_prescription_details, src_connection)
 
-tgt_mapping_patient_table = f"SELECT source_id, target_id FROM mapping_table WHERE source = '{getPractice()}' AND table_name = 'patients'"
-tgt_mapping_patient_table_df = pd.read_sql(tgt_mapping_patient_table, tgt_connection)
+tgt_mapping_prescription_table = f"SELECT source_id, target_id FROM mapping_table WHERE source = '{getPractice()}' AND table_name = 'prescriptions'"
+tgt_mapping_prescription_table_df = pd.read_sql(tgt_mapping_prescription_table, tgt_connection)
 
-tgt_mapping_episode_table = f"SELECT source_id, target_id FROM mapping_table WHERE source = '{getPractice()}' AND table_name = 'episodes'"
-tgt_mapping_episode_table_df = pd.read_sql(tgt_mapping_episode_table, tgt_connection)
-
-#---------------------------patient_id----------------------------------
-# Merging source prescriptions with target patients mapping to get target patient_id
-src_prescriptions_df['patient_id'] = src_prescriptions_df['patient_id'].astype(int)
-tgt_mapping_patient_table_df['source_id'] = tgt_mapping_patient_table_df['source_id'].astype(int)
-src_prescriptions_df = pd.merge(src_prescriptions_df, tgt_mapping_patient_table_df, left_on='patient_id', right_on='source_id', how='left')
-src_prescriptions_df = src_prescriptions_df.drop(columns=['patient_id', 'source_id'])
-src_prescriptions_df = src_prescriptions_df.rename(columns={'target_id': 'patient_id'})
-
-#----------------------------episode_id-----------------------------------
-# Merging source prescriptions with target episodes mapping to get target episode_id
-if src_prescriptions_df['episode_id'].isnull().all():
-    src_prescriptions_df['episode_id'] = None
-else:
-    src_prescriptions_df['episode_id'] = src_prescriptions_df['episode_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
-    tgt_mapping_episode_table_df['source_id'] = tgt_mapping_episode_table_df['source_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
-    src_prescriptions_df = pd.merge(src_prescriptions_df, tgt_mapping_episode_table_df, left_on='episode_id', right_on='source_id', how='left')
-    src_prescriptions_df = src_prescriptions_df.drop(columns=['episode_id', 'source_id'])
-    src_prescriptions_df = src_prescriptions_df.rename(columns={'target_id': 'episode_id'})
+#----------------------------prescription_id---------------------------
+# Merging source prescription_details with target prescriptions mapping to get target prescription_id
+src_prescription_details_df['prescription_id'] = src_prescription_details_df['prescription_id'].astype(int)
+tgt_mapping_prescription_table_df['source_id'] = tgt_mapping_prescription_table_df['source_id'].astype(int)
+src_prescription_details_df = pd.merge(src_prescription_details_df, tgt_mapping_prescription_table_df, left_on='prescription_id', right_on='source_id', how='left')
+src_prescription_details_df = src_prescription_details_df.drop(columns=['prescription_id', 'source_id'])
+src_prescription_details_df = src_prescription_details_df.rename(columns={'target_id': 'prescription_id'})
 
 #----------------------------new data insertion--------------------------------
-src_prescriptions_df1 = src_prescriptions_df
 #id genration for new data
-tgt_prescriptions_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
-tgt_prescriptions_max_df = pd.read_sql(tgt_prescriptions_max, tgt_connection)
-max_id = int(tgt_prescriptions_max_df['max_id'].iloc[0])
-src_prescriptions_df1.insert(0, 'target_id', range(max_id, max_id + len(src_prescriptions_df1)))
+tgt_prescription_details_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
+tgt_prescription_details_max_df = pd.read_sql(tgt_prescription_details_max, tgt_connection)
+max_id = int(tgt_prescription_details_max_df['max_id'].iloc[0])
+src_prescription_details_df.insert(0, 'target_id', range(max_id, max_id + len(src_prescription_details_df)))
 
 # Before inserting new records, check mapping_table for existing source_ids to avoid duplicates
 def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name):
@@ -97,15 +82,16 @@ def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name
             insert_query1 = f"INSERT INTO mapping_table ({columns1}) VALUES ({placeholders1})"
             cursor.executemany(insert_query1, mapping_rows)
             tgt_connection.commit()
-        print('Data and mapping table insert successful for prescriptions - New insert!')
+        print('Data and mapping table insert successful for prescriptions_details - New insert!')
     except Exception as e:
         #logging.error(f"Data and mapping table insert failed for contacts - New insert! Error occurred: {e} \n Query: {insert_query} \n Mapping Query: {insert_query1} \n sample row: {rows[0] if rows else 'No rows to insert'} \n sample mapping row: {mapping_rows[0] if mapping_rows else 'No mapping rows to insert'}", flush=True)
         print("Query:", insert_query)
         print("Sample Row:", rows[0] if rows else "No rows to insert")
-        print('Data and mapping table insert failed for prescriptions - New insert!')
+        print('Data and mapping table insert failed for prescriptions_details - New insert!')
 
 # Insert new records and mapping entries simultaneously
-insert_new_records_and_mapping(src_prescriptions_df1, tgt_connection, practice_name, table_name)
+insert_new_records_and_mapping(src_prescription_details_df, tgt_connection, practice_name, table_name)
+
 
 
 

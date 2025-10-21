@@ -35,8 +35,8 @@ src_appointment_description_procedures_df = src_appointment_description_procedur
 
 #----------------------------procedure_id-----------------------------------
 # Merging source appointment_description_procedures with target procedures mapping to get target procedure_id
-src_appointment_description_procedures_df['procedure_id'] = src_appointment_description_procedures_df['procedure_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
-tgt_mapping_procedure_table_df['source_id'] = tgt_mapping_procedure_table_df['source_id'].astype(int)
+src_appointment_description_procedures_df['procedure_id'] = src_appointment_description_procedures_df['procedure_id'].apply(lambda x: str(x) if pd.notnull(x) else None)
+tgt_mapping_procedure_table_df['source_id'] = tgt_mapping_procedure_table_df['source_id'].astype(str)
 src_appointment_description_procedures_df = pd.merge(src_appointment_description_procedures_df, tgt_mapping_procedure_table_df, left_on='procedure_id', right_on='source_id', how='inner')
 src_appointment_description_procedures_df = src_appointment_description_procedures_df.drop(columns=['procedure_id', 'source_id'])
 src_appointment_description_procedures_df = src_appointment_description_procedures_df.rename(columns={'target_id': 'procedure_id'})

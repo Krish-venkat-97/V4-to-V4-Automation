@@ -18,34 +18,44 @@ table_name = 'insurance_plans'
 
 src_insurance_plans  = f"SELECT * FROM insurance_plans"
 src_insurance_plans_df = pd.read_sql(src_insurance_plans, src_connection)
-#drop the duplicate names (case-insensitive)
+
 src_insurance_plans_df['name_upper'] = src_insurance_plans_df['name'].str.upper()
-src_insurance_plans_df = src_insurance_plans_df.drop_duplicates(subset=['name_upper','insurance_company_id'], keep='first')
 
 tgt_insurance_plans = 'SELECT id as target_id,UPPER(name) as tgt_insurance_plan_name,insurance_company_id as tgt_insurance_company_id FROM insurance_plans'
 tgt_insurance_plans_df = pd.read_sql(tgt_insurance_plans, tgt_connection)
 
-tgt_mapping_table = f"SELECT source_id, target_id FROM mapping_table WHERE source = '{getPractice()}' AND table_name = 'insurance_companies'"
-tgt_mapping_table_df = pd.read_sql(tgt_mapping_table, tgt_connection)
+tgt_insurance_companies = f"SELECT source_id, target_id FROM mapping_table WHERE source = '{getPractice()}' AND table_name = 'insurance_companies'"
+tgt_insurance_companies_df = pd.read_sql(tgt_insurance_companies, tgt_connection)
 
+
+#----------------------------insurance_company_id----------------------------------
 # Merge the mapping table to make target_id from tgt_mapping_table as insurance_company_id
 src_insurance_plans_df['insurance_company_id'] = src_insurance_plans_df['insurance_company_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
-tgt_mapping_table_df['source_id'] = tgt_mapping_table_df['source_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
-src_insurance_plans_df = pd.merge(src_insurance_plans_df, tgt_mapping_table_df, left_on='insurance_company_id', right_on='source_id', how='left')
+tgt_insurance_companies_df['source_id'] = tgt_insurance_companies_df['source_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
+src_insurance_plans_df = pd.merge(src_insurance_plans_df, tgt_insurance_companies_df, left_on='insurance_company_id', right_on='source_id', how='left')
 src_insurance_plans_df = src_insurance_plans_df.drop(columns=['insurance_company_id', 'source_id'])
 src_insurance_plans_df = src_insurance_plans_df.rename(columns={'target_id': 'insurance_company_id'})
 
 #----------------------------new data insertion--------------------------------
 # Create tuple columns for comparison
 src_insurance_plans_df['name_upper'] = src_insurance_plans_df['name'].str.upper()
+src_insurance_plans_df['insurance_company_id'] = src_insurance_plans_df['insurance_company_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
+tgt_insurance_plans_df['tgt_insurance_plan_name'] = tgt_insurance_plans_df['tgt_insurance_plan_name'].str.upper()
+tgt_insurance_plans_df['tgt_insurance_company_id'] = tgt_insurance_plans_df['tgt_insurance_company_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
 src_insurance_plans_df['key'] = list(zip(src_insurance_plans_df['name_upper'], src_insurance_plans_df['insurance_company_id']))
 tgt_insurance_plans_df['key'] = list(zip(tgt_insurance_plans_df['tgt_insurance_plan_name'], tgt_insurance_plans_df['tgt_insurance_company_id']))
 
 # Filter rows where the (name, insurance_company_id) pair is NOT in the target
-src_insurance_plans_df1 = src_insurance_plans_df[~src_insurance_plans_df['key'].isin(tgt_insurance_plans_df['key'])]
-src_insurance_plans_df1 = src_insurance_plans_df1.drop(columns=['key'])
+#src_insurance_plans_df1 = src_insurance_plans_df[~src_insurance_plans_df['key'].isin(tgt_insurance_plans_df['key'])]
+src_insurance_plans_df1 = pd.merge(
+    src_insurance_plans_df,
+    tgt_insurance_plans_df,
+    how='left',
+    indicator=True,
+    on=['key']
+).query('_merge == "left_only"').drop(columns=['_merge','key','target_id'])
 
-#id genration for new data
+#id generation for new data
 tgt_insurance_plans_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
 tgt_insurance_plans_max_df = pd.read_sql(tgt_insurance_plans_max, tgt_connection)
 max_id = int(tgt_insurance_plans_max_df['max_id'].iloc[0])
@@ -67,15 +77,18 @@ def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name
     # Fetch existing source_ids from mapping_table
     existing_source_ids_query = f'''
         SELECT source_id FROM mapping_table
-        WHERE source = "{practice_name}" AND table_name = "{table_name}"
+        WHERE source = "{practice_name}" AND table_name = "{table_name}" AND source = "{practice_name}"
     '''
     existing_source_ids_df = pd.read_sql(existing_source_ids_query, tgt_connection)
-    existing_source_ids = set(existing_source_ids_df['source_id'].tolist())
+
     # Filter out rows where id is in existing_source_ids
-    new_records_df = df[~df['id'].isin(existing_source_ids)]
-    mapping_records_df = df[~df['id'].isin(existing_source_ids)][['id', 'target_id']].rename(columns={'id': 'source_id'})
+    df['id'] = df['id'].astype(str)
+    existing_source_ids_df['source_id'] = existing_source_ids_df['source_id'].astype(str)
+
+    new_records_df = pd.merge(df, existing_source_ids_df, left_on='id', right_on='source_id', how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])
+    mapping_records_df = pd.merge(df, existing_source_ids_df, left_on='id', right_on='source_id', how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])[['id', 'target_id']].rename(columns={'id': 'source_id'})
     mapping_records_df = mapping_records_df.drop_duplicates(subset=['source_id'], keep='first')
-    new_records_df =new_records_df.drop(columns=['id'])
+    new_records_df = new_records_df.drop(columns=['id','source_id'])
     new_records_df = new_records_df.rename(columns={'target_id': 'id'})
     new_records_df = new_records_df.replace({pd.NaT: None}).replace({np.nan: None})
     if new_records_df.empty:
@@ -116,23 +129,26 @@ def update_existing_records_and_mapping(df, tgt_connection, practice_name, table
     # Fetch existing source_ids from mapping_table
     existing_source_ids_query = f'''
         SELECT source_id FROM mapping_table
-        WHERE source = "{practice_name}" AND table_name = "{table_name}"
+        WHERE source = "{practice_name}" AND table_name = "{table_name}" AND source = "{practice_name}"
     '''
     existing_source_ids_df = pd.read_sql(existing_source_ids_query, tgt_connection)
-    existing_source_ids = set(existing_source_ids_df['source_id'].tolist())
+    existing_source_ids_df = existing_source_ids_df.drop_duplicates()
     
-    # Filter out rows where id is in existing_source_ids
-    existing_records_df = df[~df['source_id'].isin(existing_source_ids)]
-    existing_records_df = existing_records_df.drop_duplicates(subset=['source_id'], keep='first')
-    if existing_records_df.empty:
+    # Filter out rows where id not in existing_source_ids
+    df['source_id'] = df['source_id'].astype(str)
+    existing_source_ids_df['source_id'] = existing_source_ids_df['source_id'].astype(str)
+
+    non_existing_records_df = pd.merge(df, existing_source_ids_df, on='source_id', how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])
+    non_existing_records_df = non_existing_records_df.drop_duplicates()
+    if non_existing_records_df.empty:
         print("No existing records to update.")
         return
 
     # Insert existing records into the target table
-    column_names = [col for col in existing_records_df.columns]
+    column_names = [col for col in non_existing_records_df.columns]
     columns = ", ".join(column_names)
     placeholders = ", ".join(["%s"] * len(column_names))
-    rows = existing_records_df.values.tolist()
+    rows = non_existing_records_df.values.tolist()
 
     column_names1 = ['source', 'table_name', 'target_id', 'source_id','new_or_exist']
     columns1 = ", ".join(column_names1)
