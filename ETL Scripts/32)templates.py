@@ -60,7 +60,7 @@ def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name
         return
 
     # Insert new records into the target table
-    column_names = [col for col in new_records_df.columns]
+    column_names = ['`show`' if col == 'show' else col for col in new_records_df.columns]
     columns = ", ".join(column_names)
     placeholders = ", ".join(["%s"] * len(column_names))
     rows = new_records_df.values.tolist()

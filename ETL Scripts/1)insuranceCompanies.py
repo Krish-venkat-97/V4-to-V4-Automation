@@ -34,7 +34,7 @@ src_insurance_companies_df1 = dd.merge(
     indicator=True,
     left_on=['name_upper', 'address1_upper'],
     right_on=['insurance_company_name', 'address1_name']
-).query('_merge == "left_only"').drop(columns=['_merge', 'insurance_company_name', 'address1_name','target_id'])
+).query('_merge == "left_only"').drop(columns=['_merge', 'insurance_company_name', 'address1_name','target_id','address1_upper'])
 
 #id genration for new data
 tgt_insurance_companies_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'
@@ -53,7 +53,7 @@ src_insurance_companies_df2 = dd.merge(
     indicator=True,
     left_on=['name_upper', 'address1_upper'],
     right_on=['insurance_company_name', 'address1_name']
-).drop(columns=['_merge', 'insurance_company_name', 'address1_name'])
+).drop(columns=['_merge', 'insurance_company_name', 'address1_name','address1_upper'])
 
 src_insurance_companies_df2 = src_insurance_companies_df2[['target_id','id']].rename(columns={'id': 'source_id'})
 
@@ -73,7 +73,7 @@ def insert_new_records_and_mapping(df, tgt_connection, practice_name, table_name
     new_records_df = pd.merge(df, existing_source_ids_df, left_on='id', right_on='source_id', how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])
     mapping_records_df = pd.merge(df, existing_source_ids_df, left_on='id', right_on='source_id', how='left', indicator=True).query('_merge == "left_only"').drop(columns=['_merge'])[['id', 'target_id']].rename(columns={'id': 'source_id'})
     mapping_records_df = mapping_records_df.drop_duplicates(subset=['source_id'], keep='first')
-    new_records_df = new_records_df.drop(columns=['id','name_upper'])
+    new_records_df = new_records_df.drop(columns=['id','name_upper','source_id'])
     new_records_df = new_records_df.rename(columns={'target_id': 'id'})
     new_records_df = new_records_df.replace({pd.NaT: None}).replace({np.nan: None})
     if new_records_df.empty:

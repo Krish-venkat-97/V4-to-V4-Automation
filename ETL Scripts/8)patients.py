@@ -34,8 +34,13 @@ tgt_insurance_plan_mapping_df = pd.read_sql(tgt_insurance_plan_mapping, tgt_conn
 tgt_hospital_mapping = f"SELECT source_id, target_id FROM mapping_table WHERE source = '{getPractice()}' AND table_name = 'hospitals'"
 tgt_hospital_mapping_df = pd.read_sql(tgt_hospital_mapping, tgt_connection)
 
+tgt_insurance_plans = f'SELECT id FROM insurance_plans'
+tgt_insurance_plans_df = pd.read_sql(tgt_insurance_plans, tgt_connection)
+tgt_insurance_plans_df['id'] = tgt_insurance_plans_df['id'].astype(int)
+
 #--------------------------patient type----------------------------------
 #Merging source patients with target patient types mapping to get target patient type_id
+src_patients_df['patient_type_id'] = src_patients_df['patient_type_id'].fillna(0)
 src_patients_df['patient_type_id'] = src_patients_df['patient_type_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
 tgt_patientType_mapping_df['source_id'] = tgt_patientType_mapping_df['source_id'].astype(int)
 src_patients_df = pd.merge(src_patients_df, tgt_patientType_mapping_df, left_on='patient_type_id', right_on='source_id', how='left')
@@ -73,11 +78,16 @@ else:
 
 #--------------------------insurance plan----------------------------------
 #Merging source patients with target insurance plans mapping to get target insurance_plan_id
+src_patients_df['primary_insurance_plan_id'] = src_patients_df['primary_insurance_plan_id'].fillna(0)
 src_patients_df['primary_insurance_plan_id'] = src_patients_df['primary_insurance_plan_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
 tgt_insurance_plan_mapping_df['source_id'] = tgt_insurance_plan_mapping_df['source_id'].astype(int)
 src_patients_df = pd.merge(src_patients_df, tgt_insurance_plan_mapping_df, left_on='primary_insurance_plan_id', right_on='source_id', how='left')
 src_patients_df = src_patients_df.drop(columns=['primary_insurance_plan_id', 'source_id'])
 src_patients_df = src_patients_df.rename(columns={'target_id': 'primary_insurance_plan_id'})
+
+#src_patients_df['primary_insurance_plan_id'] = src_patients_df['primary_insurance_plan_id'].apply(lambda x: int(x) if pd.notnull(x) else None)
+#src_patients_dfx0 = src_patients_df['primary_insurance_plan_id'].drop_duplicates()
+#src_patients_dfx = pd.merge(src_patients_dfx0, tgt_insurance_plans_df, left_on='primary_insurance_plan_id', right_on='id', how='left',indicator=True).query('_merge == "left_only"')
 
 #--------------------------secondary insurance plan----------------------------------
 #Merging source patients with target insurance plans mapping to get target insurance_plan_id

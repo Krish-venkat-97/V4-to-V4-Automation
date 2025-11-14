@@ -38,12 +38,29 @@ def getSourceFilePath(row):
 
 landing_letter_df['source_file_path']= landing_letter_df.apply(getSourceFilePath, axis=1)
 
+"""
 def getTargetFilePath(row):
     file_directory = os.path.join(tgt_file_path, str(row['target_patient_id']), 'letters')
     file_path = os.path.join(file_directory, str(row['target_letter_id']) + '.doc')
-    return pd.Series([file_directory, file_path])
+    return pd.Series({
+        'target_file_directory': file_directory,
+        'target_file_path': file_path
+    })
 
 landing_letter_df[['target_file_directory', 'target_file_path']] = landing_letter_df.apply(getTargetFilePath, axis=1)
+"""
+
+def get_target_file_directory(row):
+    file_directory = os.path.join(tgt_file_path, str(row['target_patient_id']), 'letters')
+    return file_directory
+
+landing_letter_df['target_file_directory'] = landing_letter_df.apply(get_target_file_directory, axis=1)
+
+def get_target_file_path(row):
+    file_path = os.path.join(row['target_file_directory'], str(row['target_letter_id']) + '.doc')
+    return file_path
+
+landing_letter_df['target_file_path'] = landing_letter_df.apply(get_target_file_path, axis=1) 
 
 landing_letter_df1 = landing_letter_df[['source_file_path','target_file_directory','target_file_path']]
 

@@ -34,8 +34,9 @@ scripts = [
     '12)patientContactDetails.py', '13)letterCategories.py', '14)scanCategories.py',
     '15)letters.py', '16)scanDocuments.py', '17)AppointmentDescription.py',
     '18)procedures.py',
-    '20)appointments.py', '21)surgeries.py', '22)prescriptions.py', '23)taxes.py',
-    '24)taxDetails.py', '25)invoices.py', '26)invoiceDetails.py', '27)receipts.py',
+    '20)appointments.py', '21)surgeries.py', '22)prescriptions.py', '22)zPrescriptionDetails.py', '32)templates.py', '33)calenderTags.py',
+    '34)waitingList.py', '35)formTemplates.py', '36)forms.py', '37)taskTrays.py',
+    '23)taxes.py', '24)taxDetails.py', '25)invoices.py', '26)invoiceDetails.py', '27)receipts.py',
     '28)receipt_details.py','29)letterMigration.py','30)scanMigration.py','31)scanMigration2.py'
 ]
 

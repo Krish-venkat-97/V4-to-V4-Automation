@@ -53,7 +53,7 @@ src_insurance_plans_df1 = pd.merge(
     how='left',
     indicator=True,
     on=['key']
-).query('_merge == "left_only"').drop(columns=['_merge','key','target_id'])
+).query('_merge == "left_only"').drop(columns=['_merge','key','target_id','tgt_insurance_company_id','tgt_insurance_plan_name'])
 
 #id generation for new data
 tgt_insurance_plans_max = f'SELECT CASE WHEN MAX(id) is NULL THEN 1 ELSE MAX(id) + 1 END as max_id FROM {table_name}'

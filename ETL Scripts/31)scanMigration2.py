@@ -39,12 +39,29 @@ def getSourceFilePath(row):
 
 landing_scan_df['source_file_path']= landing_scan_df.apply(getSourceFilePath, axis=1)
 
+"""
 def getTargetFilePath(row):
     file_directory = os.path.join(tgt_file_path, str(row['target_patient_id']), 'scans', 'verified')
     file_path = os.path.join(file_directory, str(row['target_scan_id']) + '.pdf')
-    return pd.Series([file_directory, file_path])
+    return pd.Series({
+        'target_file_directory': file_directory,
+        'target_file_path': file_path
+    })
 
 landing_scan_df[['target_file_directory', 'target_file_path']] = landing_scan_df.apply(getTargetFilePath, axis=1)
+"""
+
+def get_target_file_directory(row):
+    file_directory = os.path.join(tgt_file_path, str(row['target_patient_id']), 'scans', 'verified')
+    return file_directory
+
+landing_scan_df['target_file_directory'] = landing_scan_df.apply(get_target_file_directory, axis=1)
+
+def get_target_file_path(row):
+    file_path = os.path.join(row['target_file_directory'], str(row['target_scan_id']) + '.pdf')
+    return file_path
+
+landing_scan_df['target_file_path'] = landing_scan_df.apply(get_target_file_path, axis=1)
 
 landing_scan_df1 = landing_scan_df[['source_file_path','target_file_directory','target_file_path']]
 

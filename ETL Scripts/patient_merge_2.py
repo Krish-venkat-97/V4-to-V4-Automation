@@ -16,16 +16,17 @@ target_cursor = myconnection.cursor()
 ref_patient = """
 SELECT old_patient.id AS orginal_id,new_patient.id AS new_id,old_patient.display_name,old_patient.dob
 FROM (
-SELECT p.id,p.display_name,p.dob FROM patients p
+SELECT p.id,p.display_name,p.dob,p.address1 FROM patients p
 WHERE p.id NOT IN (SELECT target_id FROM mapping_table m WHERE m.table_name = 'patients')
 )old_patient
 INNER JOIN 
 ( 
-SELECT p.id,CONCAT(p.surname,' ',p.first_name) AS display_name,p.dob FROM patients p
+SELECT p.id,p.display_name,p.dob,p.address1 FROM patients p
 WHERE p.id IN (SELECT target_id FROM mapping_table m WHERE m.table_name = 'patients')
 )new_patient
 ON UPPER(LTRIM(RTRIM(old_patient.display_name))) = UPPER(LTRIM(RTRIM(new_patient.display_name)))
-AND old_patient.dob = new_patient.dob
+AND old_patient.dob = new_patient.dob AND 
+old_patient.address1 = new_patient.address1
 """
 ref_patient_df = pd.read_sql(ref_patient,myconnection)
     
